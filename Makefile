@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-cov lint format clean build publish-test publish docs venv
+.PHONY: help install install-dev test test-cov lint format clean build publish-test publish release docs venv
 
 # Variables
 PYTHON := python3
@@ -26,8 +26,9 @@ help:
 	@echo "Building & Publishing:"
 	@echo "  make clean         Remove build artifacts"
 	@echo "  make build         Build distribution packages"
+	@echo "  make release       Tag and push (triggers PyPI publish)"
 	@echo "  make publish-test  Publish to TestPyPI"
-	@echo "  make publish       Publish to PyPI"
+	@echo "  make publish       Publish to PyPI (manual)"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  make shell         Open Django shell with package loaded"
@@ -166,22 +167,60 @@ dev: install-dev
 	@echo "  make format       - Format code"
 	@echo "  make lint         - Check code quality"
 
-# Version bump helpers
-bump-patch:
-	@echo "Bumping patch version..."
-	@echo "⚠️  Remember to update:"
-	@echo "  - setup.py"
-	@echo "  - pyproject.toml"
-	@echo "  - drf_scoped_permissions/__init__.py"
-	@echo "  - CHANGELOG.md"
+# Release workflow
+release: _check-clean _check-branch _check-version test build
+	@VERSION=$$(grep 'version = ' pyproject.toml | head -1 | cut -d'"' -f2) && \
+	echo "" && \
+	echo "📦 Ready to release v$$VERSION" && \
+	echo "" && \
+	echo "This will:" && \
+	echo "  1. Create git tag v$$VERSION" && \
+	echo "  2. Push to origin (triggers PyPI publish via GitHub Actions)" && \
+	echo "" && \
+	read -p "Continue? [y/N] " confirm && \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		git tag "v$$VERSION" && \
+		git push && git push --tags && \
+		echo "" && \
+		echo "✅ Released v$$VERSION!" && \
+		echo "GitHub Actions will publish to PyPI shortly."; \
+	else \
+		echo "Aborted."; \
+	fi
 
-bump-minor:
-	@echo "Bumping minor version..."
-	@echo "⚠️  Remember to update:"
-	@echo "  - setup.py"
-	@echo "  - pyproject.toml"
-	@echo "  - drf_scoped_permissions/__init__.py"
-	@echo "  - CHANGELOG.md"
+_check-clean:
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "❌ Working directory not clean. Commit or stash changes first."; \
+		git status --short; \
+		exit 1; \
+	fi
+
+_check-version:
+	@PYPROJECT_VERSION=$$(grep '^version = ' pyproject.toml | head -1 | cut -d'"' -f2) && \
+	INIT_VERSION=$$(grep '__version__' drf_scoped_permissions/__init__.py | cut -d'"' -f2) && \
+	if [ "$$PYPROJECT_VERSION" != "$$INIT_VERSION" ]; then \
+		echo "❌ Version mismatch:"; \
+		echo "   pyproject.toml: $$PYPROJECT_VERSION"; \
+		echo "   __init__.py:    $$INIT_VERSION"; \
+		exit 1; \
+	fi && \
+	if ! grep -q "## \[$$PYPROJECT_VERSION\]" CHANGELOG.md && ! grep -q "## $$PYPROJECT_VERSION" CHANGELOG.md; then \
+		echo "❌ No CHANGELOG.md entry for version $$PYPROJECT_VERSION"; \
+		exit 1; \
+	fi && \
+	echo "✅ Version $$PYPROJECT_VERSION consistent across files"
+
+_check-branch:
+	@BRANCH=$$(git rev-parse --abbrev-ref HEAD) && \
+	if [ "$$BRANCH" != "main" ]; then \
+		echo "❌ Not on main branch (currently on $$BRANCH)"; \
+		exit 1; \
+	fi
+	@git fetch origin main --quiet
+	@if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse origin/main)" ]; then \
+		echo "❌ Local main differs from origin. Pull or push first."; \
+		exit 1; \
+	fi
 
 # Pre-commit checks
 pre-commit: format lint test
