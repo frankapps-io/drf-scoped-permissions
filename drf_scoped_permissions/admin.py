@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import Any
+
 from django import forms
 from django.contrib import admin
+from django.contrib.admin import display
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.models import Group
-from django.utils.safestring import mark_safe
+from django.http import HttpRequest
+from django.utils.safestring import SafeString, mark_safe
 from rest_framework_api_key.admin import APIKeyModelAdmin
 
 from .models import ScopedAPIKey, ScopedGroup
@@ -17,7 +23,7 @@ class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     Groups them by resource for a cleaner display.
     """
 
-    def render(self, name, value, attrs=None, renderer=None):
+    def render(self, name: str, value: Any, attrs: dict[str, Any] | None = None, renderer: Any = None) -> SafeString:
         if value is None:
             value = []
 
@@ -30,7 +36,7 @@ class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         html_parts = ['<div class="scope-groups">']
 
         for group_name, scopes in scope_groups.items():
-            html_parts.append(f'<fieldset class="scope-group">')
+            html_parts.append('<fieldset class="scope-group">')
             html_parts.append(f'<legend>{group_name}</legend>')
 
             for scope_value, scope_label in scopes:
@@ -58,11 +64,11 @@ class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
 
         return mark_safe(''.join(html_parts))
 
-    def value_from_datadict(self, data, files, name):
+    def value_from_datadict(self, data: Any, files: Any, name: str) -> list[str]:
         """Get list of selected scope values."""
         if hasattr(data, 'getlist'):
-            return data.getlist(name)
-        return data.get(name, [])
+            return list(data.getlist(name))
+        return list(data.get(name, []))
 
 
 class ScopedAPIKeyForm(forms.ModelForm):
@@ -79,21 +85,21 @@ class ScopedAPIKeyForm(forms.ModelForm):
         model = ScopedAPIKey
         fields = ["name", "scopes", "revoked", "expiry_date"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # Populate choices from discovered scopes
         scope_groups = get_scopes_grouped_by_resource()
-        all_choices = []
+        all_choices: list[tuple[str, str]] = []
         for scopes in scope_groups.values():
             all_choices.extend(scopes)
-        self.fields['scopes'].choices = all_choices
+        self.fields['scopes'].choices = all_choices  # type: ignore[attr-defined]
 
         # Set initial value from instance
         if self.instance.pk and self.instance.scopes:
             self.fields['scopes'].initial = self.instance.scopes
 
-    def clean_scopes(self):
+    def clean_scopes(self) -> list[str]:
         """Ensure scopes is a list."""
         scopes = self.cleaned_data.get('scopes', [])
         if isinstance(scopes, str):
@@ -107,7 +113,7 @@ class ScopedAPIKeyAdmin(APIKeyModelAdmin):
 
     form = ScopedAPIKeyForm
 
-    list_display = [
+    list_display = (  # type: ignore[assignment]
         "name",
         "display_scopes",
         "prefix",
@@ -115,10 +121,10 @@ class ScopedAPIKeyAdmin(APIKeyModelAdmin):
         "expiry_date",
         "_has_expired",
         "revoked",
-    ]
-    list_filter = ["revoked", "created"]
-    search_fields = ["name", "prefix"]
-    readonly_fields = []
+    )
+    list_filter = ("revoked", "created")  # type: ignore[assignment]
+    search_fields = ("name", "prefix")
+    readonly_fields = ()  # type: ignore[assignment]
 
     fieldsets = (
         (None, {"fields": ("name",)}),
@@ -131,19 +137,20 @@ class ScopedAPIKeyAdmin(APIKeyModelAdmin):
         }),
     )
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
+    def get_form(self, request: HttpRequest, obj: ScopedAPIKey | None = None, change: bool = False, **kwargs: Any) -> type:
         # Explicitly set form fields to avoid Django extracting from fieldsets
         # which includes readonly fields that can't be in the form
         kwargs['fields'] = ['name', 'scopes', 'revoked', 'expiry_date']
         return super().get_form(request, obj, change, **kwargs)
 
-    def display_scopes(self, obj):
+    @display(description="Scopes")
+    def display_scopes(self, obj: ScopedAPIKey) -> str:
         """Display scopes in a human-readable format."""
         if not obj.scopes:
             return "⚠️ Unrestricted (legacy)"
 
         # Group scopes by resource for display
-        grouped = {}
+        grouped: dict[str, list[str]] = {}
         for scope in obj.scopes:
             if "." not in scope:
                 continue
@@ -157,8 +164,6 @@ class ScopedAPIKeyAdmin(APIKeyModelAdmin):
             result.append(f"{resource}({', '.join(sorted(actions))})")
 
         return " | ".join(result)
-
-    display_scopes.short_description = "Scopes"
 
 
 class ScopedGroupForm(forms.ModelForm):
@@ -175,21 +180,21 @@ class ScopedGroupForm(forms.ModelForm):
         model = ScopedGroup
         fields = ["group", "scopes"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # Populate choices from discovered scopes
         scope_groups = get_scopes_grouped_by_resource()
-        all_choices = []
+        all_choices: list[tuple[str, str]] = []
         for scopes in scope_groups.values():
             all_choices.extend(scopes)
-        self.fields['scopes'].choices = all_choices
+        self.fields['scopes'].choices = all_choices  # type: ignore[attr-defined]
 
         # Set initial value from instance
         if self.instance.pk and self.instance.scopes:
             self.fields['scopes'].initial = self.instance.scopes
 
-    def clean_scopes(self):
+    def clean_scopes(self) -> list[str]:
         """Ensure scopes is a list."""
         scopes = self.cleaned_data.get('scopes', [])
         if isinstance(scopes, str):

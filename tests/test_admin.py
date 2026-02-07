@@ -11,12 +11,12 @@ from django.contrib.auth.models import Group
 from django.test import RequestFactory
 
 from drf_scoped_permissions.admin import (
+    GroupAdmin,
     ScopedAPIKeyAdmin,
     ScopedAPIKeyForm,
-    GroupAdmin,
     ScopedGroupInline,
 )
-from drf_scoped_permissions.models import ScopedAPIKey, ScopedGroup
+from drf_scoped_permissions.models import ScopedAPIKey
 
 User = get_user_model()
 
@@ -124,7 +124,7 @@ class TestScopedAPIKeyAdmin:
 
         # Collect all field names from fieldsets
         fieldset_fields = set()
-        for name, options in admin.fieldsets:
+        for _name, options in admin.fieldsets:
             for field in options.get('fields', []):
                 if isinstance(field, (list, tuple)):
                     fieldset_fields.update(field)
@@ -230,7 +230,7 @@ class TestGroupAdminWithScopes:
         """Test Group admin includes ScopedGroup inline."""
         admin = GroupAdmin(Group, admin_site)
 
-        inline_classes = [inline.__class__ for inline in admin.get_inline_instances(None)]
+        # Verify ScopedGroupInline is in the inlines
         assert ScopedGroupInline in [type(i) for i in admin.get_inline_instances(None)]
 
     def test_scoped_group_inline_form_loads(self, db, admin_site, admin_request):

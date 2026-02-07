@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.core.management.base import BaseCommand
 
 from drf_scoped_permissions.utils import discover_scopes_from_urls
@@ -8,7 +10,7 @@ class Command(BaseCommand):
 
     help = "List all available API scopes discovered from viewsets"
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         """Execute the command."""
         scopes = discover_scopes_from_urls()
 

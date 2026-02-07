@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from django.contrib.auth.models import AbstractUser
 from rest_framework import permissions
 from rest_framework.request import Request
 
@@ -67,7 +68,7 @@ class HasAPIKeyOrGroupScope(permissions.BasePermission):
         Returns:
             True if the API key has the required scope
         """
-        api_key: ScopedAPIKey = request.auth
+        api_key = cast(ScopedAPIKey, request.auth)
 
         # Backward compatible: empty scopes = unrestricted access
         if not api_key.scopes:
@@ -103,7 +104,7 @@ class HasAPIKeyOrGroupScope(permissions.BasePermission):
             return True
 
         # Get all scopes from user's groups
-        user_scopes = self._get_user_scopes(request.user)
+        user_scopes = self._get_user_scopes(request.user)  # type: ignore[arg-type]
 
         # Empty scopes = no access (different from API keys for security)
         if not user_scopes:
@@ -111,7 +112,7 @@ class HasAPIKeyOrGroupScope(permissions.BasePermission):
 
         return required_scope in user_scopes
 
-    def _get_user_scopes(self, user) -> set:
+    def _get_user_scopes(self, user: AbstractUser) -> set[str]:
         """
         Get all scopes from the user's groups.
 
@@ -145,7 +146,7 @@ class HasAPIKeyOrGroupScope(permissions.BasePermission):
         """
         # Explicit scope takes precedence
         if hasattr(view, "required_scope"):
-            return view.required_scope
+            return cast(str, view.required_scope)
 
         # Get resource name
         resource = getattr(view, "scope_resource", None)
@@ -184,10 +185,10 @@ class HasAPIKeyOrGroupScope(permissions.BasePermission):
                 return "delete"
             else:
                 # Custom action - use the action name directly
-                return action_name
+                return str(action_name)
 
         # Fall back to HTTP method mapping
-        action_map = {
+        action_map: dict[str, str] = {
             "GET": "read",
             "HEAD": "read",
             "OPTIONS": "read",
@@ -197,4 +198,4 @@ class HasAPIKeyOrGroupScope(permissions.BasePermission):
             "DELETE": "delete",
         }
 
-        return action_map.get(request.method, "read")
+        return action_map.get(request.method or "GET", "read")

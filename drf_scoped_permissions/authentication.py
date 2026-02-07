@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework import authentication, exceptions
+from rest_framework.request import Request
 
 from .models import ScopedAPIKey
 
@@ -17,7 +18,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
 
     keyword = "Bearer"
 
-    def authenticate(self, request):
+    def authenticate(self, request: Request) -> tuple[None, ScopedAPIKey] | None:
         """
         Authenticate the request using an API key.
 
@@ -53,7 +54,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
 
         return self.authenticate_credentials(key)
 
-    def authenticate_credentials(self, key: str):
+    def authenticate_credentials(self, key: str) -> tuple[None, ScopedAPIKey]:
         """
         Validate the API key and return the associated user.
 
@@ -80,13 +81,13 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
 
         # Update last used timestamp if enabled (disabled by default for performance)
         if getattr(settings, "SCOPED_PERMISSIONS_TRACK_LAST_USED", False):
-            api_key.update_last_used()
+            api_key.update_last_used()  # type: ignore[attr-defined]
 
         # Return (user, auth) - we return (None, api_key) since API keys
         # are not tied to specific users
-        return None, api_key
+        return None, api_key  # type: ignore[return-value]
 
-    def authenticate_header(self, request):
+    def authenticate_header(self, request: Request) -> str:
         """
         Return the WWW-Authenticate header value.
 

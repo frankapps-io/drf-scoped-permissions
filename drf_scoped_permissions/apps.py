@@ -6,6 +6,6 @@ class DrfScopedPermissionsConfig(AppConfig):
     name = "drf_scoped_permissions"
     verbose_name = "DRF Scoped Permissions"
 
-    def ready(self):
+    def ready(self) -> None:
         """Import signal handlers."""
         pass  # Add signal handlers here if needed

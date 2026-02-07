@@ -1,5 +1,6 @@
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
+from django.contrib.auth.models import AbstractUser
 from django.urls import get_resolver
 
 
@@ -13,10 +14,10 @@ def discover_scopes_from_urls() -> Dict[str, List[str]]:
         Dictionary mapping resource names to lists of scope strings
         Example: {'posts': ['posts.read', 'posts.write', 'posts.delete']}
     """
-    scopes = {}
+    scopes: Dict[str, Set[str]] = {}
     resolver = get_resolver()
 
-    def extract_scopes(url_patterns, prefix=""):
+    def extract_scopes(url_patterns: Any, prefix: str = "") -> None:
         """Recursively extract scopes from URL patterns."""
         from rest_framework import viewsets
 
@@ -57,7 +58,7 @@ def discover_scopes_from_urls() -> Dict[str, List[str]]:
     return formatted_scopes
 
 
-def get_viewset_actions(viewset_class) -> Set[str]:
+def get_viewset_actions(viewset_class: type) -> Set[str]:
     """
     Get all possible actions for a viewset.
 
@@ -140,7 +141,7 @@ def get_scopes_grouped_by_resource() -> Dict[str, List[tuple]]:
         Example: {'Posts': [('posts.read', 'Read'), ('posts.write', 'Write')], ...}
     """
     scopes_by_resource = discover_scopes_from_urls()
-    grouped = {}
+    grouped: Dict[str, List[tuple[str, str]]] = {}
 
     for resource, scope_list in sorted(scopes_by_resource.items()):
         resource_display = resource.replace("_", " ").title()
@@ -154,7 +155,7 @@ def get_scopes_grouped_by_resource() -> Dict[str, List[tuple]]:
     return grouped
 
 
-def get_user_scopes(user) -> Set[str]:
+def get_user_scopes(user: AbstractUser) -> Set[str]:
     """
     Get all scopes for a user from their groups.
 
