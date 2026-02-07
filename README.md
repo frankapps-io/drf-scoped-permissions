@@ -219,7 +219,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 ```
 
-### List Available Scopes
+### Management Commands
+
+**List available scopes:**
 
 ```bash
 python manage.py list_scopes
@@ -239,6 +241,16 @@ comments:
   - comments.read
   - comments.write
   - comments.delete
+```
+
+**Migrate legacy API keys:**
+
+```bash
+# Preview migration
+python manage.py migrate_api_keys --dry-run
+
+# Run migration
+python manage.py migrate_api_keys
 ```
 
 ### Custom Permission Class
@@ -329,10 +341,25 @@ class APITestCase(TestCase):
 If you're already using `djangorestframework-api-key`:
 
 1. Install `drf-scoped-permissions`
-2. Run migrations (creates `ScopedAPIKey` table)
-3. Your existing API keys continue working (backward compatible)
-4. Add scopes to new API keys as needed
-5. Gradually add scopes to existing keys when ready
+2. Run migrations: `python manage.py migrate drf_scoped_permissions`
+3. Migrate existing API keys:
+
+```bash
+# Preview what will be migrated
+python manage.py migrate_api_keys --dry-run
+
+# Run the migration
+python manage.py migrate_api_keys
+```
+
+4. Migrated keys have empty scopes (unrestricted access) - same as before
+5. Add scopes via Django admin when ready
+6. Once verified, delete legacy keys:
+
+```python
+from rest_framework_api_key.models import APIKey
+APIKey.objects.all().delete()
+```
 
 ### From Manual Implementation
 
