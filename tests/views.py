@@ -40,3 +40,15 @@ class PostViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["post"])
     def publish(self, request, pk=None):
         return Response({"status": "published"})
+
+
+class UserProfileViewSet(viewsets.ViewSet):
+    """Test viewset with explicit scope_resource different from class name."""
+
+    scope_resource = "profiles"
+
+    def list(self, request):
+        return Response([{"id": 1, "username": "testuser"}])
+
+    def retrieve(self, request, pk=None):
+        return Response({"id": pk, "username": "testuser"})

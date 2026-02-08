@@ -1,7 +1,24 @@
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Tuple
 
+from django.apps import apps
 from django.contrib.auth.models import AbstractUser
 from django.urls import get_resolver
+
+
+def get_resource_name(view_or_class: type | object) -> str:
+    """Get the scope resource name for a viewset.
+
+    Resolution order:
+    1. scope_resource attribute (explicit)
+    2. Class name with 'ViewSet' stripped, lowercased (fallback)
+    """
+    cls = view_or_class if isinstance(view_or_class, type) else type(view_or_class)
+
+    scope_resource = getattr(cls, "scope_resource", None)
+    if scope_resource:
+        return scope_resource
+
+    return cls.__name__.replace("ViewSet", "").lower()
 
 
 def discover_scopes_from_urls() -> Dict[str, List[str]]:
@@ -33,10 +50,7 @@ def discover_scopes_from_urls() -> Dict[str, List[str]]:
 
                 # Only process ViewSets
                 if issubclass(view_class, viewsets.ViewSetMixin):
-                    # Get resource name from basename or class name
-                    basename = getattr(callback, "basename", None)
-                    if not basename:
-                        basename = view_class.__name__.replace("ViewSet", "").lower()
+                    basename = get_resource_name(view_class)
 
                     # Get all actions for this viewset
                     actions = get_viewset_actions(view_class)
@@ -130,6 +144,57 @@ def get_all_available_scopes() -> List[tuple]:
     return choices
 
 
+def discover_scopes_with_apps() -> Dict[str, Tuple[str, List[str]]]:
+    """
+    Discover scopes from URLs with Django app label information.
+
+    Returns:
+        Dictionary mapping resource names to (app_label, scope_list) tuples
+        Example: {'posts': ('blog', ['posts.read', 'posts.write'])}
+    """
+    scopes: Dict[str, Set[str]] = {}
+    app_labels: Dict[str, str] = {}
+    resolver = get_resolver()
+
+    def extract_scopes(url_patterns: Any, prefix: str = "") -> None:
+        from rest_framework import viewsets
+
+        for pattern in url_patterns:
+            if hasattr(pattern, "url_patterns"):
+                extract_scopes(pattern.url_patterns, prefix)
+
+            callback = getattr(pattern, "callback", None)
+            if callback and hasattr(callback, "cls"):
+                view_class = callback.cls
+
+                if issubclass(view_class, viewsets.ViewSetMixin):
+                    basename = get_resource_name(view_class)
+
+                    actions = get_viewset_actions(view_class)
+
+                    if basename not in scopes:
+                        scopes[basename] = set()
+
+                    scopes[basename].update(actions)
+
+                    # Track app label
+                    if basename not in app_labels:
+                        app_config = apps.get_containing_app_config(view_class.__module__)
+                        app_labels[basename] = (
+                            str(app_config.verbose_name) if app_config else "Other"
+                        )
+
+    extract_scopes(resolver.url_patterns)
+
+    result = {}
+    for resource, actions in scopes.items():
+        scope_list = [f"{resource}.{action}" for action in sorted(actions)]
+        app_label = app_labels.get(resource, "Other")
+        result[resource] = (app_label, scope_list)
+
+    return result
+
+
 def get_scopes_grouped_by_resource() -> Dict[str, List[tuple]]:
     """
     Get scopes organized by resource for grouped display.
@@ -149,6 +214,33 @@ def get_scopes_grouped_by_resource() -> Dict[str, List[tuple]]:
             _, action = scope.split(".", 1)
             action_display = action.replace("_", " ").title()
             grouped[resource_display].append((scope, action_display))
+
+    return grouped
+
+
+def get_scopes_grouped_by_app() -> Dict[str, Dict[str, List[tuple]]]:
+    """
+    Get scopes organized by app and then by resource.
+
+    Returns:
+        Dictionary mapping app labels to dictionaries of resource display names
+        to lists of (scope, action_display) tuples.
+        Example: {'Blog': {'Posts': [('posts.read', 'Read'), ...]}}
+    """
+    scopes_with_apps = discover_scopes_with_apps()
+    grouped: Dict[str, Dict[str, List[tuple[str, str]]]] = {}
+
+    for resource, (app_label, scope_list) in sorted(scopes_with_apps.items()):
+        if app_label not in grouped:
+            grouped[app_label] = {}
+
+        resource_display = resource.replace("_", " ").title()
+        grouped[app_label][resource_display] = []
+
+        for scope in scope_list:
+            _, action = scope.split(".", 1)
+            action_display = action.replace("_", " ").title()
+            grouped[app_label][resource_display].append((scope, action_display))
 
     return grouped
 
