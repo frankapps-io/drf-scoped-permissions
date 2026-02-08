@@ -12,7 +12,7 @@ from django.utils.safestring import SafeString, mark_safe
 from rest_framework_api_key.admin import APIKeyModelAdmin
 
 from .models import ScopedAPIKey, ScopedGroup
-from .utils import get_scopes_grouped_by_resource
+from .utils import get_scopes_grouped_by_app, get_scopes_grouped_by_resource
 
 
 class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
@@ -29,36 +29,47 @@ class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         if value is None:
             value = []
 
-        # Get grouped scopes
-        scope_groups = get_scopes_grouped_by_resource()
+        # Get scopes grouped by app and resource
+        scopes_by_app = get_scopes_grouped_by_app()
 
-        if not scope_groups:
+        if not scopes_by_app:
             return mark_safe(
                 '<p class="help">No scopes discovered. Add required_scopes to your viewsets.</p>'
             )
 
-        html_parts = ['<div class="scope-groups">']
+        html_parts = ['<div class="scope-apps">']
 
-        for group_name, scopes in scope_groups.items():
-            html_parts.append('<fieldset class="scope-group">')
-            html_parts.append(f"<legend>{group_name}</legend>")
+        for app_label, resources in sorted(scopes_by_app.items()):
+            html_parts.append('<div class="scope-app">')
+            html_parts.append(f'<h3 class="scope-app-header">{app_label}</h3>')
+            html_parts.append('<div class="scope-groups">')
 
-            for scope_value, scope_label in scopes:
-                checked = "checked" if scope_value in value else ""
-                checkbox_id = f"id_{name}_{scope_value.replace('.', '_')}"
-                html_parts.append(
-                    f'<div class="checkbox-row">'
-                    f'<label for="{checkbox_id}">'
-                    f'<input type="checkbox" name="{name}" value="{scope_value}" '
-                    f'id="{checkbox_id}" {checked}> {scope_label}'
-                    f"</label></div>"
-                )
+            for group_name, scopes in sorted(resources.items()):
+                html_parts.append('<fieldset class="scope-group">')
+                html_parts.append(f"<legend>{group_name}</legend>")
 
-            html_parts.append("</fieldset>")
+                for scope_value, scope_label in scopes:
+                    checked = "checked" if scope_value in value else ""
+                    checkbox_id = f"id_{name}_{scope_value.replace('.', '_')}"
+                    html_parts.append(
+                        f'<div class="checkbox-row">'
+                        f'<label for="{checkbox_id}">'
+                        f'<input type="checkbox" name="{name}" value="{scope_value}" '
+                        f'id="{checkbox_id}" {checked}> {scope_label}'
+                        f"</label></div>"
+                    )
+
+                html_parts.append("</fieldset>")
+
+            html_parts.append("</div>")
+            html_parts.append("</div>")
 
         html_parts.append("</div>")
         html_parts.append("""
             <style>
+                .scope-apps { }
+                .scope-app { margin-bottom: 15px; }
+                .scope-app-header { margin: 10px 0 5px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
                 .scope-groups { display: flex; flex-wrap: wrap; gap: 20px; }
                 .scope-group { border: 1px solid #ccc; padding: 10px; min-width: 200px; }
                 .scope-group legend { font-weight: bold; padding: 0 5px; }

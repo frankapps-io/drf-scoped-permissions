@@ -113,6 +113,26 @@ class PostViewSet(viewsets.ModelViewSet):
         pass
 ```
 
+### Resource Name Resolution
+
+The resource name used in scopes is resolved consistently across discovery and permission checking:
+
+1. **`scope_resource` attribute** (explicit) - takes priority
+2. **Class name** with `ViewSet` stripped, lowercased (fallback)
+
+```python
+class PostViewSet(viewsets.ModelViewSet):
+    scope_resource = 'posts'  # → posts.read, posts.write, etc.
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    scope_resource = 'profiles'  # → profiles.read (not "userprofile")
+
+class OrderViewSet(viewsets.ModelViewSet):
+    pass  # No scope_resource → falls back to "order" from class name
+```
+
+This ensures the admin, management commands, and runtime permission checks all use the same resource name.
+
 ## Usage Examples
 
 ### API Keys (Service Accounts)
@@ -232,17 +252,21 @@ Output:
 ```
 Available API Scopes:
 
-posts:
-  - posts.read
-  - posts.write
-  - posts.delete
-  - posts.publish
+[Blog]
+  posts:
+    - posts.read
+    - posts.write
+    - posts.delete
+    - posts.publish
 
-comments:
-  - comments.read
-  - comments.write
-  - comments.delete
+[Comments]
+  comments:
+    - comments.read
+    - comments.write
+    - comments.delete
 ```
+
+Scopes are grouped by Django app for readability.
 
 **Migrate legacy API keys:**
 
@@ -286,7 +310,7 @@ The package provides a user-friendly admin interface:
 
 ### API Keys Admin
 - Create/revoke API keys
-- Select scopes via organized checkboxes (grouped by resource)
+- Select scopes via organized checkboxes (grouped by Django app, then by resource)
 - View masked keys for security
 - Track creation date and last used
 

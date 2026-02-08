@@ -148,10 +148,10 @@ class HasAPIKeyOrGroupScope(permissions.BasePermission):
         if hasattr(view, "required_scope"):
             return cast(str, view.required_scope)
 
-        # Get resource name
-        resource = getattr(view, "scope_resource", None)
-        if not resource and hasattr(view, "basename"):
-            resource = view.basename
+        # Get resource name via centralized resolution
+        from .utils import get_resource_name
+
+        resource = get_resource_name(view)
 
         if not resource:
             return None
