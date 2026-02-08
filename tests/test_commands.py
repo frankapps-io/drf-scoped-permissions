@@ -86,8 +86,9 @@ class TestMigrateApiKeysCommand:
             hashed_key="test123",
             scopes=[],
         )
-        assert 1 == ScopedAPIKey.objects.filter(
-            prefix=legacy_prefix).count(), "Only one key with that prefix should exist before migration"
+        assert 1 == ScopedAPIKey.objects.filter(prefix=legacy_prefix).count(), (
+            "Only one key with that prefix should exist before migration"
+        )
 
         out = StringIO()
         call_command("migrate_api_keys", stdout=out)
@@ -95,4 +96,6 @@ class TestMigrateApiKeysCommand:
 
         # Should skip the duplicate
         assert "SKIP" in output
-        assert 1 == ScopedAPIKey.objects.filter(prefix=legacy_prefix).count(), "Should still only have one key with that prefix"
+        assert 1 == ScopedAPIKey.objects.filter(prefix=legacy_prefix).count(), (
+            "Should still only have one key with that prefix"
+        )

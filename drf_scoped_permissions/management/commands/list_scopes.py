@@ -32,7 +32,5 @@ class Command(BaseCommand):
             self.stdout.write("")
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Total: {len(scopes)} resources, {total_scopes} scopes"
-            )
+            self.style.SUCCESS(f"Total: {len(scopes)} resources, {total_scopes} scopes")
         )

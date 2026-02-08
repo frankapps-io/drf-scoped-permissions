@@ -67,7 +67,7 @@ print(f"API Key: {key}")
 ## Usage
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "Authorization: Api-Key YOUR_API_KEY" \
      http://localhost:8000/api/posts/
 ```
 

@@ -15,6 +15,7 @@ User = get_user_model()
 def api_client():
     """Provide a DRF API client."""
     from rest_framework.test import APIClient
+
     return APIClient()
 
 
@@ -22,18 +23,14 @@ def api_client():
 def user():
     """Create a test user."""
     return User.objects.create_user(
-        username="testuser",
-        email="test@example.com",
-        password="testpass123"
+        username="testuser", email="test@example.com", password="testpass123"
     )
 
 
 @pytest.fixture
 def api_key_unrestricted():
     """Create an unrestricted API key (no scopes)."""
-    api_key, key = ScopedAPIKey.objects.create_key(
-        name="Unrestricted Test Key"
-    )
+    api_key, key = ScopedAPIKey.objects.create_key(name="Unrestricted Test Key")
     # Store the key for tests to use
     api_key._test_key = key
     return api_key
@@ -43,8 +40,7 @@ def api_key_unrestricted():
 def api_key_with_scopes():
     """Create an API key with specific scopes."""
     api_key, key = ScopedAPIKey.objects.create_key(
-        name="Scoped Test Key",
-        scopes=["posts.read", "posts.write"]
+        name="Scoped Test Key", scopes=["posts.read", "posts.write"]
     )
     # Store the key for tests to use
     api_key._test_key = key
@@ -55,10 +51,7 @@ def api_key_with_scopes():
 def group_with_scopes():
     """Create a group with scopes."""
     group = Group.objects.create(name="Test Group")
-    ScopedGroup.objects.create(
-        group=group,
-        scopes=["posts.read", "posts.write"]
-    )
+    ScopedGroup.objects.create(group=group, scopes=["posts.read", "posts.write"])
     return group
 
 

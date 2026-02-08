@@ -10,13 +10,13 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
     Authentication backend for API keys with scopes.
 
     Clients should pass the API key in the Authorization header:
-        Authorization: Bearer <api_key>
+        Authorization: Api-Key <api_key>
 
-    Or using the Api-Key header (configurable):
-        Api-Key: <api_key>
+    The keyword can be overridden via the SCOPED_API_KEY_AUTH_KEYWORD setting.
+    Keyword matching is case-insensitive.
     """
 
-    keyword = "Bearer"
+    keyword = getattr(settings, "SCOPED_API_KEY_AUTH_KEYWORD", None) or "Api-Key"
 
     def authenticate(self, request: Request) -> tuple[None, ScopedAPIKey] | None:
         """
@@ -33,11 +33,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
 
         if not auth_header:
             # Try custom header if configured
-            api_key_header = getattr(
-                request._request.META,
-                "API_KEY_CUSTOM_HEADER",
-                None
-            )
+            api_key_header = getattr(request._request.META, "API_KEY_CUSTOM_HEADER", None)
             if api_key_header:
                 key = request.META.get(api_key_header, "")
                 if key:
@@ -49,7 +45,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         except ValueError:
             return None
 
-        if keyword != self.keyword:
+        if keyword.lower() != self.keyword.lower():
             return None
 
         return self.authenticate_credentials(key)

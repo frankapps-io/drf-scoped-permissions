@@ -23,9 +23,7 @@ class Command(BaseCommand):
         try:
             from rest_framework_api_key.models import APIKey
         except ImportError:
-            self.stderr.write(
-                self.style.ERROR("rest_framework_api_key is not installed")
-            )
+            self.stderr.write(self.style.ERROR("rest_framework_api_key is not installed"))
             return
 
         dry_run = options["dry_run"]
@@ -34,9 +32,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("DRY RUN - no changes will be made\n"))
 
         # Get existing prefixes to avoid duplicates
-        existing_prefixes = set(
-            ScopedAPIKey.objects.values_list("prefix", flat=True)
-        )
+        existing_prefixes = set(ScopedAPIKey.objects.values_list("prefix", flat=True))
 
         legacy_keys = APIKey.objects.all()
         migrated = 0
@@ -70,15 +66,11 @@ class Command(BaseCommand):
         self.stdout.write("")
         if dry_run:
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Would migrate {migrated} keys, skip {skipped} duplicates"
-                )
+                self.style.SUCCESS(f"Would migrate {migrated} keys, skip {skipped} duplicates")
             )
         else:
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Migrated {migrated} keys, skipped {skipped} duplicates"
-                )
+                self.style.SUCCESS(f"Migrated {migrated} keys, skipped {skipped} duplicates")
             )
             if migrated > 0:
                 self.stdout.write(

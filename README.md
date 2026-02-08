@@ -79,7 +79,7 @@ class PostViewSet(viewsets.ModelViewSet):
 ### 5. Use the API Key
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "Authorization: Api-Key YOUR_API_KEY" \
      http://localhost:8000/api/posts/
 ```
 
@@ -328,7 +328,7 @@ class APITestCase(TestCase):
         
         response = self.client.get(
             '/api/posts/',
-            HTTP_AUTHORIZATION=f'Bearer {key}'
+            HTTP_AUTHORIZATION=f'Api-Key {key}'
         )
         
         self.assertEqual(response.status_code, 200)
@@ -387,6 +387,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 git clone https://github.com/yourusername/drf-scoped-permissions.git
 cd drf-scoped-permissions
 pip install -e ".[dev]"
+make install-hooks  # installs pre-commit hook (ruff auto-fix + mypy)
 pytest
 ```
 

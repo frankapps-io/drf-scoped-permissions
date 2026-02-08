@@ -51,9 +51,7 @@ def discover_scopes_from_urls() -> Dict[str, List[str]]:
     # Convert sets to sorted lists and format as scope strings
     formatted_scopes = {}
     for resource, actions in scopes.items():
-        formatted_scopes[resource] = [
-            f"{resource}.{action}" for action in sorted(actions)
-        ]
+        formatted_scopes[resource] = [f"{resource}.{action}" for action in sorted(actions)]
 
     return formatted_scopes
 

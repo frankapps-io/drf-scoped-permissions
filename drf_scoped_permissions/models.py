@@ -22,14 +22,11 @@ class ScopedAPIKey(AbstractAPIKey):
             "API scopes this key has access to. "
             "Format: ['resource.action', ...]. "
             "Leave empty for unrestricted access (legacy mode)."
-        )
+        ),
     )
 
     last_used_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        editable=False,
-        help_text="Last time this API key was used"
+        null=True, blank=True, editable=False, help_text="Last time this API key was used"
     )
 
     class Meta(AbstractAPIKey.Meta):
@@ -55,7 +52,7 @@ class ScopedAPIKey(AbstractAPIKey):
     def update_last_used(self) -> None:
         """Update the last_used_at timestamp."""
         self.last_used_at = timezone.now()
-        self.save(update_fields=['last_used_at'])
+        self.save(update_fields=["last_used_at"])
 
     def __str__(self) -> str:
         scope_count = len(self.scopes) if self.scopes else "unrestricted"
@@ -74,7 +71,7 @@ class ScopedGroup(models.Model):
         Group,
         on_delete=models.CASCADE,
         related_name="scoped_group",
-        help_text="Django group to extend with scopes"
+        help_text="Django group to extend with scopes",
     )
 
     scopes = models.JSONField(
@@ -84,7 +81,7 @@ class ScopedGroup(models.Model):
             "API scopes users in this group have access to. "
             "Format: ['resource.action', ...]. "
             "Empty list = no API access."
-        )
+        ),
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
