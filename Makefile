@@ -197,19 +197,7 @@ _check-clean:
 	fi
 
 _check-version:
-	@PYPROJECT_VERSION=$$(grep '^version = ' pyproject.toml | head -1 | cut -d'"' -f2) && \
-	INIT_VERSION=$$(grep '__version__' drf_scoped_permissions/__init__.py | cut -d'"' -f2) && \
-	if [ "$$PYPROJECT_VERSION" != "$$INIT_VERSION" ]; then \
-		echo "❌ Version mismatch:"; \
-		echo "   pyproject.toml: $$PYPROJECT_VERSION"; \
-		echo "   __init__.py:    $$INIT_VERSION"; \
-		exit 1; \
-	fi && \
-	if ! grep -q "## \[$$PYPROJECT_VERSION\]" CHANGELOG.md && ! grep -q "## $$PYPROJECT_VERSION" CHANGELOG.md; then \
-		echo "❌ No CHANGELOG.md entry for version $$PYPROJECT_VERSION"; \
-		exit 1; \
-	fi && \
-	echo "✅ Version $$PYPROJECT_VERSION consistent across files"
+	@scripts/check-version.sh
 
 _check-branch:
 	@BRANCH=$$(git rev-parse --abbrev-ref HEAD) && \
@@ -226,7 +214,7 @@ _check-branch:
 # Pre-commit hook setup
 install-hooks:
 	@echo "Installing pre-commit hook..."
-	chmod +x scripts/lint.sh scripts/pre-commit.sh
+	chmod +x scripts/lint.sh scripts/pre-commit.sh scripts/check-version.sh
 	ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 	@echo "✅ Pre-commit hook installed!"
 

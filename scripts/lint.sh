@@ -25,5 +25,8 @@ fi
 echo "Type checking with mypy..."
 mypy drf_scoped_permissions
 
+echo "Checking version consistency..."
+"$(dirname "$0")/check-version.sh"
+
 echo ""
-echo "All lint checks passed!"
+echo "All pre-commit checks passed!"
