@@ -5,47 +5,112 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
+        ("auth", "0012_alter_user_first_name_max_length"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ScopedAPIKey',
+            name="ScopedAPIKey",
             fields=[
-                ('id', models.CharField(editable=False, max_length=150, primary_key=True, serialize=False, unique=True)),
-                ('prefix', models.CharField(editable=False, max_length=8, unique=True)),
-                ('hashed_key', models.CharField(editable=False, max_length=150)),
-                ('created', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('name', models.CharField(default=None, help_text='A free-form name for the API key. Need not be unique. 50 characters max.', max_length=50)),
-                ('revoked', models.BooleanField(blank=True, default=False, help_text='If the API key is revoked, clients cannot use it anymore. (This cannot be undone.)')),
-                ('expiry_date', models.DateTimeField(blank=True, help_text='Once API key expires, clients cannot use it anymore.', null=True, verbose_name='Expires')),
-                ('scopes', models.JSONField(blank=True, default=list, help_text="API scopes this key has access to. Format: ['resource.action', ...]. Leave empty for unrestricted access (legacy mode).")),
-                ('last_used_at', models.DateTimeField(blank=True, editable=False, help_text='Last time this API key was used', null=True)),
+                (
+                    "id",
+                    models.CharField(
+                        editable=False,
+                        max_length=150,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("prefix", models.CharField(editable=False, max_length=8, unique=True)),
+                ("hashed_key", models.CharField(editable=False, max_length=150)),
+                ("created", models.DateTimeField(auto_now_add=True, db_index=True)),
+                (
+                    "name",
+                    models.CharField(
+                        default=None,
+                        help_text="A free-form name for the API key. Need not be unique. 50 characters max.",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "revoked",
+                    models.BooleanField(
+                        blank=True,
+                        default=False,
+                        help_text="If the API key is revoked, clients cannot use it anymore. (This cannot be undone.)",
+                    ),
+                ),
+                (
+                    "expiry_date",
+                    models.DateTimeField(
+                        blank=True,
+                        help_text="Once API key expires, clients cannot use it anymore.",
+                        null=True,
+                        verbose_name="Expires",
+                    ),
+                ),
+                (
+                    "scopes",
+                    models.JSONField(
+                        blank=True,
+                        default=list,
+                        help_text="API scopes this key has access to. Format: ['resource.action', ...]. Leave empty for unrestricted access (legacy mode).",
+                    ),
+                ),
+                (
+                    "last_used_at",
+                    models.DateTimeField(
+                        blank=True,
+                        editable=False,
+                        help_text="Last time this API key was used",
+                        null=True,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Scoped API key',
-                'verbose_name_plural': 'Scoped API keys',
-                'ordering': ('-created',),
-                'abstract': False,
+                "verbose_name": "Scoped API key",
+                "verbose_name_plural": "Scoped API keys",
+                "ordering": ("-created",),
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ScopedGroup',
+            name="ScopedGroup",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('scopes', models.JSONField(blank=True, default=list, help_text="API scopes users in this group have access to. Format: ['resource.action', ...]. Empty list = no API access.")),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('group', models.OneToOneField(help_text='Django group to extend with scopes', on_delete=django.db.models.deletion.CASCADE, related_name='scoped_group', to='auth.group')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "scopes",
+                    models.JSONField(
+                        blank=True,
+                        default=list,
+                        help_text="API scopes users in this group have access to. Format: ['resource.action', ...]. Empty list = no API access.",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "group",
+                    models.OneToOneField(
+                        help_text="Django group to extend with scopes",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="scoped_group",
+                        to="auth.group",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Scoped group',
-                'verbose_name_plural': 'Scoped groups',
-                'db_table': 'drf_scoped_permissions_group',
+                "verbose_name": "Scoped group",
+                "verbose_name_plural": "Scoped groups",
+                "db_table": "drf_scoped_permissions_group",
             },
         ),
     ]

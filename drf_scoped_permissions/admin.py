@@ -23,7 +23,9 @@ class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     Groups them by resource for a cleaner display.
     """
 
-    def render(self, name: str, value: Any, attrs: dict[str, Any] | None = None, renderer: Any = None) -> SafeString:
+    def render(
+        self, name: str, value: Any, attrs: dict[str, Any] | None = None, renderer: Any = None
+    ) -> SafeString:
         if value is None:
             value = []
 
@@ -31,42 +33,44 @@ class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         scope_groups = get_scopes_grouped_by_resource()
 
         if not scope_groups:
-            return mark_safe('<p class="help">No scopes discovered. Add required_scopes to your viewsets.</p>')
+            return mark_safe(
+                '<p class="help">No scopes discovered. Add required_scopes to your viewsets.</p>'
+            )
 
         html_parts = ['<div class="scope-groups">']
 
         for group_name, scopes in scope_groups.items():
             html_parts.append('<fieldset class="scope-group">')
-            html_parts.append(f'<legend>{group_name}</legend>')
+            html_parts.append(f"<legend>{group_name}</legend>")
 
             for scope_value, scope_label in scopes:
-                checked = 'checked' if scope_value in value else ''
+                checked = "checked" if scope_value in value else ""
                 checkbox_id = f"id_{name}_{scope_value.replace('.', '_')}"
                 html_parts.append(
                     f'<div class="checkbox-row">'
                     f'<label for="{checkbox_id}">'
                     f'<input type="checkbox" name="{name}" value="{scope_value}" '
                     f'id="{checkbox_id}" {checked}> {scope_label}'
-                    f'</label></div>'
+                    f"</label></div>"
                 )
 
-            html_parts.append('</fieldset>')
+            html_parts.append("</fieldset>")
 
-        html_parts.append('</div>')
-        html_parts.append('''
+        html_parts.append("</div>")
+        html_parts.append("""
             <style>
                 .scope-groups { display: flex; flex-wrap: wrap; gap: 20px; }
                 .scope-group { border: 1px solid #ccc; padding: 10px; min-width: 200px; }
                 .scope-group legend { font-weight: bold; padding: 0 5px; }
                 .checkbox-row { margin: 5px 0; }
             </style>
-        ''')
+        """)
 
-        return mark_safe(''.join(html_parts))
+        return mark_safe("".join(html_parts))
 
     def value_from_datadict(self, data: Any, files: Any, name: str) -> list[str]:
         """Get list of selected scope values."""
-        if hasattr(data, 'getlist'):
+        if hasattr(data, "getlist"):
             return list(data.getlist(name))
         return list(data.get(name, []))
 
@@ -93,15 +97,15 @@ class ScopedAPIKeyForm(forms.ModelForm):
         all_choices: list[tuple[str, str]] = []
         for scopes in scope_groups.values():
             all_choices.extend(scopes)
-        self.fields['scopes'].choices = all_choices  # type: ignore[attr-defined]
+        self.fields["scopes"].choices = all_choices  # type: ignore[attr-defined]
 
         # Set initial value from instance
         if self.instance.pk and self.instance.scopes:
-            self.fields['scopes'].initial = self.instance.scopes
+            self.fields["scopes"].initial = self.instance.scopes
 
     def clean_scopes(self) -> list[str]:
         """Ensure scopes is a list."""
-        scopes = self.cleaned_data.get('scopes', [])
+        scopes = self.cleaned_data.get("scopes", [])
         if isinstance(scopes, str):
             return [scopes] if scopes else []
         return list(scopes) if scopes else []
@@ -128,19 +132,31 @@ class ScopedAPIKeyAdmin(APIKeyModelAdmin):
 
     fieldsets = (
         (None, {"fields": ("name",)}),
-        ("Permissions", {
-            "fields": ("scopes",),
-            "description": "Select which resources and actions this API key can access.",
-        }),
-        ("Status", {
-            "fields": ("revoked", "expiry_date"),
-        }),
+        (
+            "Permissions",
+            {
+                "fields": ("scopes",),
+                "description": "Select which resources and actions this API key can access.",
+            },
+        ),
+        (
+            "Status",
+            {
+                "fields": ("revoked", "expiry_date"),
+            },
+        ),
     )
 
-    def get_form(self, request: HttpRequest, obj: ScopedAPIKey | None = None, change: bool = False, **kwargs: Any) -> type:
+    def get_form(
+        self,
+        request: HttpRequest,
+        obj: ScopedAPIKey | None = None,
+        change: bool = False,
+        **kwargs: Any,
+    ) -> type:
         # Explicitly set form fields to avoid Django extracting from fieldsets
         # which includes readonly fields that can't be in the form
-        kwargs['fields'] = ['name', 'scopes', 'revoked', 'expiry_date']
+        kwargs["fields"] = ["name", "scopes", "revoked", "expiry_date"]
         return super().get_form(request, obj, change, **kwargs)
 
     @display(description="Scopes")
@@ -188,15 +204,15 @@ class ScopedGroupForm(forms.ModelForm):
         all_choices: list[tuple[str, str]] = []
         for scopes in scope_groups.values():
             all_choices.extend(scopes)
-        self.fields['scopes'].choices = all_choices  # type: ignore[attr-defined]
+        self.fields["scopes"].choices = all_choices  # type: ignore[attr-defined]
 
         # Set initial value from instance
         if self.instance.pk and self.instance.scopes:
-            self.fields['scopes'].initial = self.instance.scopes
+            self.fields["scopes"].initial = self.instance.scopes
 
     def clean_scopes(self) -> list[str]:
         """Ensure scopes is a list."""
-        scopes = self.cleaned_data.get('scopes', [])
+        scopes = self.cleaned_data.get("scopes", [])
         if isinstance(scopes, str):
             return [scopes] if scopes else []
         return list(scopes) if scopes else []

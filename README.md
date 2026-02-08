@@ -5,6 +5,7 @@ Resource-scoped API key and group permissions for Django REST Framework.
 [![PyPI version](https://badge.fury.io/py/drf-scoped-permissions.svg)](https://badge.fury.io/py/drf-scoped-permissions)
 [![Python versions](https://img.shields.io/pypi/pyversions/drf-scoped-permissions.svg)](https://pypi.org/project/drf-scoped-permissions/)
 [![Django versions](https://img.shields.io/pypi/djversions/drf-scoped-permissions.svg)](https://pypi.org/project/drf-scoped-permissions/)
+[![Coverage Status](https://coveralls.io/repos/github/frankapps-io/drf-scoped-permissions/badge.svg?branch=main)](https://coveralls.io/github/frankapps-io/drf-scoped-permissions?branch=main)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## What is this?
@@ -79,7 +80,7 @@ class PostViewSet(viewsets.ModelViewSet):
 ### 5. Use the API Key
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "Authorization: Api-Key YOUR_API_KEY" \
      http://localhost:8000/api/posts/
 ```
 
@@ -328,7 +329,7 @@ class APITestCase(TestCase):
         
         response = self.client.get(
             '/api/posts/',
-            HTTP_AUTHORIZATION=f'Bearer {key}'
+            HTTP_AUTHORIZATION=f'Api-Key {key}'
         )
         
         self.assertEqual(response.status_code, 200)
@@ -387,6 +388,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 git clone https://github.com/yourusername/drf-scoped-permissions.git
 cd drf-scoped-permissions
 pip install -e ".[dev]"
+make install-hooks  # installs pre-commit hook (ruff auto-fix + mypy)
 pytest
 ```
 

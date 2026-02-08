@@ -9,6 +9,7 @@ from rest_framework.response import Response
 
 class PostSerializer(serializers.Serializer):
     """Simple serializer for testing."""
+
     id = serializers.IntegerField()
     title = serializers.CharField()
 

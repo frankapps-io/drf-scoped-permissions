@@ -16,8 +16,7 @@ class TestScopedAPIKey:
     def test_create_api_key(self):
         """Test creating an API key."""
         api_key, key = ScopedAPIKey.objects.create_key(
-            name="Test Key",
-            scopes=["posts.read", "posts.write"]
+            name="Test Key", scopes=["posts.read", "posts.write"]
         )
 
         assert api_key.name == "Test Key"
@@ -27,10 +26,7 @@ class TestScopedAPIKey:
 
     def test_has_scope(self):
         """Test has_scope method."""
-        api_key = ScopedAPIKey(
-            name="Test Key",
-            scopes=["posts.read", "posts.write"]
-        )
+        api_key = ScopedAPIKey(name="Test Key", scopes=["posts.read", "posts.write"])
 
         assert api_key.has_scope("posts.read") is True
         assert api_key.has_scope("posts.write") is True
@@ -45,10 +41,7 @@ class TestScopedAPIKey:
 
     def test_str_representation(self):
         """Test string representation."""
-        api_key = ScopedAPIKey(
-            name="Test Key",
-            scopes=["posts.read", "posts.write"]
-        )
+        api_key = ScopedAPIKey(name="Test Key", scopes=["posts.read", "posts.write"])
 
         assert "Test Key" in str(api_key)
         assert "2 scopes" in str(api_key)
@@ -62,10 +55,7 @@ class TestScopedAPIKey:
 
     def test_update_last_used(self):
         """Test update_last_used method."""
-        api_key, _ = ScopedAPIKey.objects.create_key(
-            name="Test Key",
-            scopes=["posts.read"]
-        )
+        api_key, _ = ScopedAPIKey.objects.create_key(name="Test Key", scopes=["posts.read"])
         assert api_key.last_used_at is None
 
         before = timezone.now()

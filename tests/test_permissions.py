@@ -12,7 +12,7 @@ class TestAPIKeyPermissions:
 
     def test_unrestricted_api_key_has_full_access(self, api_client, api_key_unrestricted):
         """Test that API key without scopes has full access."""
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {api_key_unrestricted._test_key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {api_key_unrestricted._test_key}")
 
         # Should be able to read
         response = api_client.get("/api/posts/")
@@ -28,7 +28,7 @@ class TestAPIKeyPermissions:
 
     def test_scoped_api_key_allows_permitted_actions(self, api_client, api_key_with_scopes):
         """Test that scoped API key allows only permitted actions."""
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {api_key_with_scopes._test_key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {api_key_with_scopes._test_key}")
 
         # Should be able to read (posts.read)
         response = api_client.get("/api/posts/")
@@ -40,7 +40,7 @@ class TestAPIKeyPermissions:
 
     def test_scoped_api_key_denies_unpermitted_actions(self, api_client, api_key_with_scopes):
         """Test that scoped API key denies unpermitted actions."""
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {api_key_with_scopes._test_key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {api_key_with_scopes._test_key}")
 
         # Should NOT be able to delete (posts.delete not in scopes)
         response = api_client.delete("/api/posts/1/")
@@ -48,7 +48,7 @@ class TestAPIKeyPermissions:
 
     def test_invalid_api_key_denied(self, api_client):
         """Test that invalid API key is denied."""
-        api_client.credentials(HTTP_AUTHORIZATION="Bearer invalid-key-123")
+        api_client.credentials(HTTP_AUTHORIZATION="Api-Key invalid-key-123")
 
         response = api_client.get("/api/posts/")
         # 401 is returned because authentication fails (invalid key)
@@ -88,12 +88,11 @@ class TestUserGroupPermissions:
     def test_superuser_always_allowed(self, api_client):
         """Test that superusers bypass all checks."""
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
 
         superuser = User.objects.create_superuser(
-            username="admin",
-            email="admin@example.com",
-            password="admin123"
+            username="admin", email="admin@example.com", password="admin123"
         )
 
         api_client.force_authenticate(user=superuser)
@@ -115,7 +114,7 @@ class TestCustomActions:
     def test_custom_action_requires_scope(self, api_client, api_key_with_scopes):
         """Test that custom actions require specific scopes."""
         # API key has posts.read and posts.write, but not posts.publish
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {api_key_with_scopes._test_key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {api_key_with_scopes._test_key}")
 
         response = api_client.post("/api/posts/1/publish/")
         assert response.status_code == 403
@@ -126,11 +125,10 @@ class TestCustomActions:
 
         # Create key with publish scope
         api_key, key = ScopedAPIKey.objects.create_key(
-            name="Publisher Key",
-            scopes=["posts.read", "posts.publish"]
+            name="Publisher Key", scopes=["posts.read", "posts.publish"]
         )
 
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {key}")
 
         response = api_client.post("/api/posts/1/publish/")
         assert response.status_code == 200
@@ -145,11 +143,10 @@ class TestRetrieveAndUpdateActions:
 
         # Key with only write scope
         api_key, key = ScopedAPIKey.objects.create_key(
-            name="Write Only Key",
-            scopes=["posts.write"]
+            name="Write Only Key", scopes=["posts.write"]
         )
 
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {key}")
 
         # Retrieve should fail (needs posts.read)
         response = api_client.get("/api/posts/1/")
@@ -160,12 +157,9 @@ class TestRetrieveAndUpdateActions:
         from drf_scoped_permissions.models import ScopedAPIKey
 
         # Key with only read scope
-        api_key, key = ScopedAPIKey.objects.create_key(
-            name="Read Only Key",
-            scopes=["posts.read"]
-        )
+        api_key, key = ScopedAPIKey.objects.create_key(name="Read Only Key", scopes=["posts.read"])
 
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {key}")
 
         # PUT should fail (needs posts.write)
         response = api_client.put("/api/posts/1/", {"title": "Updated"})
@@ -177,7 +171,7 @@ class TestRetrieveAndUpdateActions:
 
     def test_update_allowed_with_write_scope(self, api_client, api_key_with_scopes):
         """Test that update works with write scope."""
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {api_key_with_scopes._test_key}")
+        api_client.credentials(HTTP_AUTHORIZATION=f"Api-Key {api_key_with_scopes._test_key}")
 
         # PUT should work (has posts.write)
         response = api_client.put("/api/posts/1/", {"title": "Updated"})

@@ -32,13 +32,31 @@ jobs:
         run: ruff check .
 
       - name: Run tests
-        run: pytest --cov=drf_scoped_permissions --cov-report=xml
+        run: pytest
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          file: ./coverage.xml
-          flags: unittests
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install coveralls
+
+      - name: Run tests with coverage
+        run: pytest --cov=drf_scoped_permissions --cov-report=lcov
+
+      - name: Upload to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.lcov
 
   build:
     runs-on: ubuntu-latest

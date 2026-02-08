@@ -37,7 +37,9 @@ MOCK_SCOPES = {
 @pytest.fixture
 def mock_scopes():
     """Mock the scope discovery to return test scopes."""
-    with patch('drf_scoped_permissions.admin.get_scopes_grouped_by_resource', return_value=MOCK_SCOPES):
+    with patch(
+        "drf_scoped_permissions.admin.get_scopes_grouped_by_resource", return_value=MOCK_SCOPES
+    ):
         yield MOCK_SCOPES
 
 
@@ -51,9 +53,7 @@ def admin_site():
 def admin_user(db):
     """Create a superuser for admin access."""
     return User.objects.create_superuser(
-        username="admin",
-        email="admin@example.com",
-        password="adminpass123"
+        username="admin", email="admin@example.com", password="adminpass123"
     )
 
 
@@ -84,8 +84,8 @@ class TestScopedAPIKeyAdmin:
         assert form_class is not None
         # Instantiate the form to ensure it works
         form = form_class()
-        assert 'name' in form.fields
-        assert 'scopes' in form.fields
+        assert "name" in form.fields
+        assert "scopes" in form.fields
 
     def test_admin_change_form_loads(self, db, admin_site, admin_request, api_key_with_scopes):
         """Test that the change form can be loaded for existing key."""
@@ -95,8 +95,8 @@ class TestScopedAPIKeyAdmin:
 
         assert form_class is not None
         form = form_class(instance=api_key_with_scopes)
-        assert 'name' in form.fields
-        assert 'scopes' in form.fields
+        assert "name" in form.fields
+        assert "scopes" in form.fields
 
     def test_admin_list_display(self, db, admin_site):
         """Test list display fields are valid."""
@@ -107,12 +107,14 @@ class TestScopedAPIKeyAdmin:
             # Should not raise
             if hasattr(admin, field):
                 assert callable(getattr(admin, field)) or True
-            elif field.startswith('_'):
+            elif field.startswith("_"):
                 # Methods like _has_expired from parent
                 pass
             else:
                 # Model field
-                assert hasattr(ScopedAPIKey, field) or field in [f.name for f in ScopedAPIKey._meta.get_fields()]
+                assert hasattr(ScopedAPIKey, field) or field in [
+                    f.name for f in ScopedAPIKey._meta.get_fields()
+                ]
 
     def test_admin_fieldsets_valid(self, db, admin_site, admin_request):
         """Test that fieldsets reference valid fields."""
@@ -125,7 +127,7 @@ class TestScopedAPIKeyAdmin:
         # Collect all field names from fieldsets
         fieldset_fields = set()
         for _name, options in admin.fieldsets:
-            for field in options.get('fields', []):
+            for field in options.get("fields", []):
                 if isinstance(field, (list, tuple)):
                     fieldset_fields.update(field)
                 else:
@@ -137,20 +139,22 @@ class TestScopedAPIKeyAdmin:
 
         for field in fieldset_fields:
             # Field should be either in form or readonly
-            assert field in form_fields or field in readonly, f"Field '{field}' not in form or readonly_fields"
+            assert field in form_fields or field in readonly, (
+                f"Field '{field}' not in form or readonly_fields"
+            )
 
     @pytest.mark.django_db
     def test_admin_add_view_renders(self, client, admin_user):
         """Test that the actual admin add view renders without errors."""
         client.force_login(admin_user)
-        response = client.get('/admin/drf_scoped_permissions/scopedapikey/add/')
+        response = client.get("/admin/drf_scoped_permissions/scopedapikey/add/")
         assert response.status_code == 200, f"Admin add view failed: {response.content[:500]}"
 
     @pytest.mark.django_db
     def test_admin_list_view_renders(self, client, admin_user):
         """Test that the admin list view renders without errors."""
         client.force_login(admin_user)
-        response = client.get('/admin/drf_scoped_permissions/scopedapikey/')
+        response = client.get("/admin/drf_scoped_permissions/scopedapikey/")
         assert response.status_code == 200
 
     def test_display_scopes_empty(self, db, admin_site, api_key_unrestricted):
@@ -176,29 +180,33 @@ class TestScopedAPIKeyForm:
         """Test form has expected fields."""
         form = ScopedAPIKeyForm()
 
-        assert 'name' in form.fields
-        assert 'scopes' in form.fields
+        assert "name" in form.fields
+        assert "scopes" in form.fields
 
     def test_form_save_creates_key(self, db, mock_scopes):
         """Test form can create a new API key."""
-        form = ScopedAPIKeyForm(data={
-            'name': 'Test Key',
-            'scopes': ['posts.read'],
-        })
+        form = ScopedAPIKeyForm(
+            data={
+                "name": "Test Key",
+                "scopes": ["posts.read"],
+            }
+        )
 
         assert form.is_valid(), form.errors
         instance = form.save()
 
         assert instance.pk is not None
-        assert instance.name == 'Test Key'
-        assert instance.scopes == ['posts.read']
+        assert instance.name == "Test Key"
+        assert instance.scopes == ["posts.read"]
 
     def test_form_save_empty_scopes(self, db):
         """Test form can create key with no scopes."""
-        form = ScopedAPIKeyForm(data={
-            'name': 'Unrestricted Key',
-            'scopes': [],
-        })
+        form = ScopedAPIKeyForm(
+            data={
+                "name": "Unrestricted Key",
+                "scopes": [],
+            }
+        )
 
         assert form.is_valid(), form.errors
         instance = form.save()
@@ -210,17 +218,17 @@ class TestScopedAPIKeyForm:
         form = ScopedAPIKeyForm(
             instance=api_key_with_scopes,
             data={
-                'name': 'Updated Name',
-                'scopes': ['comments.read'],
-                'revoked': False,
-            }
+                "name": "Updated Name",
+                "scopes": ["comments.read"],
+                "revoked": False,
+            },
         )
 
         assert form.is_valid(), form.errors
         instance = form.save()
 
-        assert instance.name == 'Updated Name'
-        assert instance.scopes == ['comments.read']
+        assert instance.name == "Updated Name"
+        assert instance.scopes == ["comments.read"]
 
 
 class TestGroupAdminWithScopes:
@@ -238,4 +246,4 @@ class TestGroupAdminWithScopes:
         from drf_scoped_permissions.admin import ScopedGroupForm
 
         form = ScopedGroupForm()
-        assert 'scopes' in form.fields
+        assert "scopes" in form.fields

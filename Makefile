@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-cov lint format clean build publish-test publish release docs venv
+.PHONY: help install install-dev test test-cov lint format clean build publish-test publish release docs venv install-hooks
 
 # Variables
 PYTHON := python3
@@ -22,6 +22,7 @@ help:
 	@echo "  make lint          Run all linting checks"
 	@echo "  make format        Format code with black and isort"
 	@echo "  make typecheck     Run mypy type checking"
+	@echo "  make install-hooks Install pre-commit git hook"
 	@echo ""
 	@echo "Building & Publishing:"
 	@echo "  make clean         Remove build artifacts"
@@ -46,7 +47,7 @@ install:
 	@echo "Installing package in editable mode..."
 	$(PIP) install -e .
 
-install-dev: venv
+install-dev: venv install-hooks
 	@echo "Installing package with dev dependencies..."
 	$(VENV_BIN)/pip install --upgrade pip
 	$(VENV_BIN)/pip install -e ".[dev]"
@@ -222,10 +223,12 @@ _check-branch:
 		exit 1; \
 	fi
 
-# Pre-commit checks
-pre-commit: format lint test
-	@echo ""
-	@echo "✅ Pre-commit checks passed! Ready to commit."
+# Pre-commit hook setup
+install-hooks:
+	@echo "Installing pre-commit hook..."
+	chmod +x scripts/lint.sh scripts/pre-commit.sh
+	ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+	@echo "✅ Pre-commit hook installed!"
 
 # Complete workflow for first-time setup
 setup: venv install-dev test
