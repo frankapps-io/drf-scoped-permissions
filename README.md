@@ -5,6 +5,7 @@ Resource-scoped API key and group permissions for Django REST Framework.
 [![PyPI version](https://badge.fury.io/py/drf-scoped-permissions.svg)](https://badge.fury.io/py/drf-scoped-permissions)
 [![Python versions](https://img.shields.io/pypi/pyversions/drf-scoped-permissions.svg)](https://pypi.org/project/drf-scoped-permissions/)
 [![Django versions](https://img.shields.io/pypi/djversions/drf-scoped-permissions.svg)](https://pypi.org/project/drf-scoped-permissions/)
+[![Coverage Status](https://coveralls.io/repos/github/frankapps-io/drf-scoped-permissions/badge.svg?branch=main)](https://coveralls.io/github/frankapps-io/drf-scoped-permissions?branch=main)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## What is this?
